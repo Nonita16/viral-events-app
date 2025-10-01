@@ -1,0 +1,64 @@
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
+
+// GET /api/referrals/analytics/[eventId] - Get referral analytics for an event
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  const supabase = await createClient()
+  const { eventId } = await params
+
+  // Check authentication
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Verify user is the event creator
+  const { data: event } = await supabase
+    .from('events')
+    .select('created_by')
+    .eq('id', eventId)
+    .single()
+
+  if (!event || event.created_by !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // Get all referral codes for this event with registration counts
+  const { data: referralCodes, error: codesError } = await supabase
+    .from('referral_codes')
+    .select('id, code, created_at')
+    .eq('event_id', eventId)
+
+  if (codesError) {
+    return NextResponse.json({ error: codesError.message }, { status: 500 })
+  }
+
+  // Get registration counts for each referral code
+  const analyticsPromises = referralCodes.map(async (code) => {
+    const { count } = await supabase
+      .from('referral_registrations')
+      .select('*', { count: 'exact', head: true })
+      .eq('referral_code_id', code.id)
+
+    return {
+      ...code,
+      registrations_count: count || 0,
+    }
+  })
+
+  const analytics = await Promise.all(analyticsPromises)
+
+  // Calculate total registrations
+  const totalRegistrations = analytics.reduce(
+    (sum, code) => sum + code.registrations_count,
+    0
+  )
+
+  return NextResponse.json({
+    analytics,
+    totalRegistrations,
+  })
+}
