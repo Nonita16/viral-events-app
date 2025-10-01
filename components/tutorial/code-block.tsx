@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "../ui/button";
 
 const CopyIcon = () => (
   <svg
@@ -46,15 +45,13 @@ export function CodeBlock({ code }: { code: string }) {
   };
 
   return (
-    <pre className="bg-muted rounded-md p-6 my-6 relative">
-      <Button
-        size="icon"
+    <pre className="bg-gray-100 dark:bg-gray-800 rounded-md p-6 my-6 relative">
+      <button
         onClick={copy}
-        variant={"outline"}
-        className="absolute right-2 top-2"
+        className="absolute right-2 top-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 dark:focus-visible:ring-gray-300 disabled:pointer-events-none disabled:opacity-50 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-50 h-9 w-9"
       >
         {icon}
-      </Button>
+      </button>
       <code className="text-xs p-3">{code}</code>
     </pre>
   );
