@@ -3,13 +3,13 @@ import { mockUser, mockSession } from '../helpers'
 
 // Mock Supabase client
 export const createMockSupabaseClient = (options: {
-  user?: any
-  session?: any
-  authError?: any
-  data?: any
-  error?: any
+  user?: unknown
+  session?: unknown
+  authError?: unknown
+  data?: unknown
+  error?: unknown
   count?: number
-  multipleQueries?: Array<{ data?: any; error?: any }>
+  multipleQueries?: Array<{ data?: unknown; error?: unknown }>
 } = {}) => {
   const {
     user = mockUser(),
@@ -114,13 +114,14 @@ export const createMockSupabaseClient = (options: {
 
     // Make the query chain thenable for direct awaiting
     Object.assign(query, {
-      then: (resolve: any) => resolve({ data: currentData, error: currentError, count }),
+      then: (resolve: (value: { data: unknown; error: unknown; count: number }) => void) =>
+        resolve({ data: currentData, error: currentError, count }),
     })
 
     return query
   })
 
-  return mockClient as any
+  return mockClient as unknown
 }
 
 // Mock the server client module

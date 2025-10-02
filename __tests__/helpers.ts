@@ -81,7 +81,7 @@ export const mockSession = () => ({
 // Helper to create mock request objects
 export const createMockRequest = (options: {
   method?: string
-  body?: any
+  body?: unknown
   headers?: Record<string, string>
 } = {}) => {
   const { method = 'GET', body, headers = {} } = options

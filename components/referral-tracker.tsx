@@ -36,7 +36,6 @@ export function ReferralTracker() {
           cookiesReady = true
         } else if (user) {
           // Don't track for registered users
-          console.log('Skip tracking - user already registered')
           return
         }
       }
@@ -46,11 +45,9 @@ export function ReferralTracker() {
         try {
           const { data, error } = await supabase.auth.signInAnonymously()
           if (error) {
-            console.error('Failed to create anonymous session:', error)
             return
           }
           if (!data.session || !data.user) {
-            console.error('No session or user returned from signInAnonymously')
             return
           }
 
@@ -58,19 +55,15 @@ export function ReferralTracker() {
           userId = data.user.id
           session = data.session
 
-          console.log('Anonymous session created:', userId)
-
           // Cookies are not immediately available after signInAnonymously
           // We'll pass the user ID directly in the request body
           cookiesReady = false
-        } catch (err) {
-          console.error('Exception creating anonymous session:', err)
+        } catch {
           return
         }
       }
 
       if (!userId) {
-        console.error('No user ID available for tracking')
         return
       }
 
@@ -87,13 +80,10 @@ export function ReferralTracker() {
         })
 
         if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}))
-          console.error('Track click failed:', res.status, errorData)
           return
         }
 
-        const result = await res.json()
-        console.log('Click tracking result:', result)
+        await res.json()
 
         // Mark as tracked
         hasTracked.current = true
@@ -101,8 +91,8 @@ export function ReferralTracker() {
 
         // Store referral code in localStorage for later attribution
         localStorage.setItem('referral_code', referralCode)
-      } catch (err) {
-        console.error('Track click error:', err)
+      } catch {
+        // Silently fail - tracking is non-critical
       }
     }
 

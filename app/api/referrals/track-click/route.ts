@@ -41,9 +41,9 @@ export async function POST(request: Request) {
       trackingUserId = user.id
 
       // If client also sent anonUserId, verify they match
+      // Still use session user ID as it's more authoritative even if mismatch
       if (anonUserId && anonUserId !== user.id) {
-        console.warn('User ID mismatch - session:', user.id, 'provided:', anonUserId)
-        // Still use session user ID as it's more authoritative
+        // Session user ID takes precedence
       }
     } else if (anonUserId) {
       // Use client-provided anonymous user ID (from signInAnonymously response)
@@ -90,13 +90,11 @@ export async function POST(request: Request) {
       })
 
     if (insertError) {
-      console.error('Insert error:', insertError)
       return NextResponse.json({ error: 'Failed to track click' }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Click tracked successfully' })
-  } catch (err) {
-    console.error('Track click error:', err)
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
