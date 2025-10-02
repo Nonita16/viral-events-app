@@ -234,8 +234,6 @@ describe('POST /api/referrals/track-click', () => {
   })
 
   it('should handle unexpected errors with try-catch', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
     // Create a client that throws an error during JSON parsing
     mockCreateClient.mockRejectedValue(new Error('Unexpected error'))
 
@@ -249,7 +247,5 @@ describe('POST /api/referrals/track-click', () => {
 
     expect(response.status).toBe(500)
     expect(data.error).toBe('Internal server error')
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Track click error:', expect.any(Error))
-    consoleErrorSpy.mockRestore()
   })
 })

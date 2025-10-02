@@ -20,16 +20,19 @@ describe('POST /api/referrals', () => {
 
   it('should generate referral code when authenticated', async () => {
     const user = mockUser()
-    const referralCode = mockReferralCode({ event_id: 'event-123', code: 'TESTCODE12' })
+    const referralCode = mockReferralCode({ code: 'TESTCODE12', created_by: user.id })
 
-    const mockClient = createMockSupabaseClient({ user, data: referralCode })
+    const mockClient = createMockSupabaseClient({
+      user,
+      multipleQueries: [
+        { data: null, error: null }, // No existing code
+        { data: referralCode, error: null }, // Insert successful
+      ]
+    })
     mockCreateClient.mockResolvedValue(mockClient)
 
     const request = new Request('http://localhost/api/referrals', {
       method: 'POST',
-      body: JSON.stringify({
-        event_id: 'event-123',
-      }),
     })
 
     const response = await POST(request)
@@ -45,9 +48,6 @@ describe('POST /api/referrals', () => {
 
     const request = new Request('http://localhost/api/referrals', {
       method: 'POST',
-      body: JSON.stringify({
-        event_id: 'event-123',
-      }),
     })
 
     const response = await POST(request)
@@ -57,36 +57,40 @@ describe('POST /api/referrals', () => {
     expect(data).toEqual({ error: 'Unauthorized' })
   })
 
-  it('should return 400 when event_id is missing', async () => {
+  it('should return existing referral code if user already has one', async () => {
     const user = mockUser()
-    const mockClient = createMockSupabaseClient({ user })
+    const existingCode = mockReferralCode({ code: 'EXISTING123', created_by: user.id })
+
+    const mockClient = createMockSupabaseClient({
+      user,
+      data: existingCode
+    })
     mockCreateClient.mockResolvedValue(mockClient)
 
     const request = new Request('http://localhost/api/referrals', {
       method: 'POST',
-      body: JSON.stringify({}),
     })
 
     const response = await POST(request)
     const data = await response.json()
 
-    expect(response.status).toBe(400)
-    expect(data).toEqual({ error: 'event_id is required' })
+    expect(response.status).toBe(200)
+    expect(data.referralCode).toEqual(existingCode)
   })
 
   it('should return 500 on database error', async () => {
     const user = mockUser()
     const mockClient = createMockSupabaseClient({
       user,
-      error: { message: 'Database error' },
+      multipleQueries: [
+        { data: null, error: null }, // No existing code
+        { data: null, error: { message: 'Database error', code: 'SOME_ERROR' } }, // Insert fails
+      ]
     })
     mockCreateClient.mockResolvedValue(mockClient)
 
     const request = new Request('http://localhost/api/referrals', {
       method: 'POST',
-      body: JSON.stringify({
-        event_id: 'event-123',
-      }),
     })
 
     const response = await POST(request)
