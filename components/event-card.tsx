@@ -6,6 +6,7 @@ type Event = Database['public']['Tables']['events']['Row']
 interface EventCardProps {
   event: Event
   isUserEvent?: boolean
+  attendeeCounts?: { going: number; maybe: number }
 }
 
 // Generate a random gradient based on event ID
@@ -47,7 +48,7 @@ const formatEventDate = (dateStr: string, timeStr: string | null) => {
   return formattedDate
 }
 
-export function EventCard({ event, isUserEvent = false }: EventCardProps) {
+export function EventCard({ event, isUserEvent = false, attendeeCounts }: EventCardProps) {
   const gradient = generateGradient(event.id)
 
   return (
@@ -61,6 +62,16 @@ export function EventCard({ event, isUserEvent = false }: EventCardProps) {
           <div className="absolute top-3 right-3">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-900 shadow-sm">
               Your Event
+            </span>
+          </div>
+        )}
+        {attendeeCounts && (
+          <div className="absolute bottom-3 right-3">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur-sm text-gray-900 shadow-sm">
+              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {attendeeCounts.going} going{attendeeCounts.maybe > 0 && ` · ${attendeeCounts.maybe} maybe`}
             </span>
           </div>
         )}

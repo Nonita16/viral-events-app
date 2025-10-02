@@ -1,11 +1,13 @@
 "use client";
 
 import { useLatestEvents } from "@/lib/hooks/use-events";
+import { useRSVPCounts } from "@/lib/hooks/use-rsvps";
 import { EventCard } from "@/components/event-card";
 import { GradientButton } from "@/components/gradient-button";
 
 export function LatestEvents() {
   const { data: events, isLoading } = useLatestEvents();
+  const { data: rsvpCounts = {} } = useRSVPCounts();
 
   if (isLoading) {
     return (
@@ -44,7 +46,11 @@ export function LatestEvents() {
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {events.map((event) => (
-          <EventCard key={event.id} event={event} />
+          <EventCard
+            key={event.id}
+            event={event}
+            attendeeCounts={rsvpCounts[event.id] || { going: 0, maybe: 0 }}
+          />
         ))}
       </div>
       <div className="text-center mt-12">
