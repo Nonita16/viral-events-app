@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { QueryProvider } from "@/lib/providers/query-provider";
 import "./globals.css";
 import Header from "@/components/Header";
+import { Footer } from "@/components/footer";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -27,10 +28,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.className} antialiased`}>
+      <body
+        className={`${geistSans.className} antialiased min-h-screen bg-gradient-to-br from-pink-50 via-yellow-50 to-pink-100 flex flex-col`}
+      >
         <QueryProvider>
           <Header />
-          {children}
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </QueryProvider>
       </body>
     </html>

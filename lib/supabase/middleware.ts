@@ -40,10 +40,25 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  // Define public routes that don't require authentication
+  const publicRoutes = ["/"];
+  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
+
+  // Allow public access to /events pages but not /events/create
+  const isEventsView = request.nextUrl.pathname.startsWith("/events") &&
+    !request.nextUrl.pathname.startsWith("/events/create");
+
+  // Allow public access to GET /api/events (but not POST)
+  const isPublicApiRoute =
+    request.nextUrl.pathname === "/api/events" && request.method === "GET" ||
+    request.nextUrl.pathname.startsWith("/api/events/") && request.method === "GET" ||
+    request.nextUrl.pathname === "/api/events/latest" && request.method === "GET";
+
   if (
-    request.nextUrl.pathname !== "/" &&
     !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
+    !isPublicRoute &&
+    !isEventsView &&
+    !isPublicApiRoute &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {
     // no user, potentially respond by redirecting the user to the login page

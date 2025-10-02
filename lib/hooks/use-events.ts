@@ -47,6 +47,19 @@ export function useMyEvents() {
   })
 }
 
+// GET latest 3 events
+export function useLatestEvents() {
+  return useQuery({
+    queryKey: ['events', 'latest'],
+    queryFn: async () => {
+      const res = await fetch('/api/events/latest')
+      if (!res.ok) throw new Error('Failed to fetch latest events')
+      const data = await res.json()
+      return data.events as Event[]
+    },
+  })
+}
+
 // CREATE event
 export function useCreateEvent() {
   const queryClient = useQueryClient()
