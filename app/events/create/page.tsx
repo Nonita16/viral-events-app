@@ -1,13 +1,13 @@
 'use client'
 
-import { useCreateEvent } from '@/lib/hooks/use-events'
 import { useRouter } from 'next/navigation'
-import { FormEvent, useState, useMemo } from 'react'
+import { FormEvent, useState, useMemo, useTransition } from 'react'
+import { track } from '@vercel/analytics'
 import { GradientButton } from '@/components/gradient-button'
 
 export default function CreateEventPage() {
   const router = useRouter()
-  const createEvent = useCreateEvent()
+  const [isPending, startTransition] = useTransition()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -53,19 +53,30 @@ export default function CreateEventPage() {
     const eventDate = dateTime.toISOString().split('T')[0] // YYYY-MM-DD
     const eventTime = `${String(dateTime.getHours()).padStart(2, '0')}:${String(dateTime.getMinutes()).padStart(2, '0')}` // HH:MM
 
-    try {
-      await createEvent.mutateAsync({
-        title,
-        description: description || null,
-        location: location || null,
-        event_date: eventDate,
-        event_time: eventTime,
-      })
+    startTransition(async () => {
+      try {
+        const res = await fetch('/api/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description: description || null,
+            location: location || null,
+            event_date: eventDate,
+            event_time: eventTime,
+          }),
+        })
 
-      router.push('/events')
-    } catch (error) {
-      console.error('Failed to create event:', error)
-    }
+        if (!res.ok) {
+          throw new Error('Failed to create event')
+        }
+
+        router.push('/events')
+        router.refresh()
+      } catch {
+        setError('Failed to create event. Please try again.')
+      }
+    })
   }
 
   return (
@@ -164,16 +175,19 @@ export default function CreateEventPage() {
         <div className="mt-6 flex items-center justify-end gap-x-6">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              track('event_creation_cancelled')
+              router.back()
+            }}
             className="text-sm/6 font-semibold text-gray-900"
           >
             Cancel
           </button>
           <GradientButton
             type="submit"
-            disabled={createEvent.isPending}
+            disabled={isPending}
           >
-            {createEvent.isPending ? 'Creating...' : 'Create Event'}
+            {isPending ? 'Creating...' : 'Create Event'}
           </GradientButton>
         </div>
       </form>

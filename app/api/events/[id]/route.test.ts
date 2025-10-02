@@ -163,6 +163,46 @@ describe('PATCH /api/events/[id]', () => {
     expect(response.status).toBe(403)
     expect(data).toEqual({ error: 'Forbidden' })
   })
+
+  it('should return 500 when update fails', async () => {
+    const user = mockUser()
+    const existingEvent = mockEvent({ id: 'event-123', created_by: user.id })
+
+    const mockClient = createMockSupabaseClient({ user })
+    let callCount = 0
+    mockClient.from = vi.fn().mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        // First call - ownership check
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: existingEvent, error: null }),
+        }
+      } else {
+        // Second call - update fails
+        return {
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } }),
+        }
+      }
+    })
+
+    mockCreateClient.mockResolvedValue(mockClient)
+
+    const request = new Request('http://localhost/api/events/event-123', {
+      method: 'PATCH',
+      body: JSON.stringify({ title: 'Updated Title' }),
+    })
+    const params = Promise.resolve({ id: 'event-123' })
+    const response = await PATCH(request, { params })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data).toEqual({ error: 'Update failed' })
+  })
 })
 
 describe('DELETE /api/events/[id]', () => {
@@ -238,5 +278,40 @@ describe('DELETE /api/events/[id]', () => {
 
     expect(response.status).toBe(403)
     expect(data).toEqual({ error: 'Forbidden' })
+  })
+
+  it('should return 500 when delete fails', async () => {
+    const user = mockUser()
+    const existingEvent = mockEvent({ id: 'event-123', created_by: user.id })
+
+    const mockClient = createMockSupabaseClient({ user })
+    let callCount = 0
+    mockClient.from = vi.fn().mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        // First call - ownership check
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: existingEvent, error: null }),
+        }
+      } else {
+        // Second call - delete fails
+        return {
+          delete: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ error: { message: 'Delete failed' } }),
+        }
+      }
+    })
+
+    mockCreateClient.mockResolvedValue(mockClient)
+
+    const request = new Request('http://localhost/api/events/event-123', { method: 'DELETE' })
+    const params = Promise.resolve({ id: 'event-123' })
+    const response = await DELETE(request, { params })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data).toEqual({ error: 'Delete failed' })
   })
 })

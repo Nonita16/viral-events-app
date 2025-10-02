@@ -23,7 +23,7 @@ export function GradientButton({
 
   if (href) {
     return (
-      <Link href={href} className={cn(baseClasses, className)}>
+      <Link href={href} onClick={onClick} className={cn(baseClasses, className)}>
         {children}
       </Link>
     );

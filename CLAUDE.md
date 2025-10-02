@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Viral Events App - a Next.js 15 application with Supabase backend for creating and managing events with viral sharing capabilities. Built with TypeScript, App Router, TanStack Query, and native Tailwind CSS. **Note**: This project was originally based on the Next.js + Supabase starter template but shadcn/ui has been removed in favor of native Tailwind CSS.
+Viral Events App - a Next.js 15 application with Supabase backend for creating and managing events with viral sharing capabilities. Built with TypeScript, App Router, and native Tailwind CSS. **Note**: This project was originally based on the Next.js + Supabase starter template but shadcn/ui has been removed in favor of native Tailwind CSS.
 
 ### Core Features
 - **Events**: Authenticated users can create, edit, and delete events (single-day events with optional time)
 - **Invites**: Authenticated users can send email invites to any event
 - **RSVPs**: Authenticated users can RSVP to events (going/maybe/not_going)
-- **Referral System**: Users can generate shareable referral codes that auto-register and RSVP new users to events
-- **Analytics**: Event creators can track how many users registered via each referral code
+- **Referral System**: Each user gets one unique referral code (user-based, not event-specific) with click tracking
+- **Analytics**: Users can track total clicks, signups, and conversion rates for their referral code
 
 ## Development Commands
 
@@ -27,6 +27,15 @@ npm start
 
 # Run linter
 npm run lint
+
+# Run tests
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage (80% threshold required)
+npm run test:coverage
 ```
 
 Development server runs on http://localhost:3000
@@ -36,11 +45,12 @@ Development server runs on http://localhost:3000
 Uses Supabase for PostgreSQL database with Row Level Security (RLS).
 
 ### Database Schema
-- **events**: id, created_by, title, description, location, event_date, event_time, image_url
-- **invites**: id, event_id, sent_by, sent_to_email, status (pending/accepted/declined)
-- **rsvps**: id, event_id, user_id, status (going/maybe/not_going) - unique per user/event
-- **referral_codes**: id, code (unique), event_id, created_by
-- **referral_registrations**: id, referral_code_id, user_id, event_id - for analytics tracking
+- **events**: id, created_by, title, description, location, event_date, event_time, created_at, updated_at
+- **invites**: id, event_id, sent_by, sent_to_email, status (pending/accepted/declined), created_at
+- **rsvps**: id, event_id, user_id, status (going/maybe/not_going), created_at, updated_at - unique(event_id, user_id)
+- **referral_codes**: id, code (unique), created_by, created_at - **user-based** (one code per user)
+- **referral_registrations**: id, referral_code_id, user_id, created_at - unique(referral_code_id, user_id) - tracks signups via referral
+- **referral_clicks**: id, referral_code_id, anon_user_id, created_at - unique(referral_code_id, anon_user_id) - tracks link clicks by anonymous users
 
 ### Working with Migrations
 
@@ -76,39 +86,34 @@ All backend logic lives in App Router API routes (`app/api/`), organized by reso
 ```
 app/api/
   ├── events/
-  │   ├── route.ts              # GET (list), POST (create)
-  │   ├── [id]/route.ts         # GET, PATCH, DELETE
-  │   └── my/route.ts           # GET user's events
+  │   ├── route.ts                     # GET (list all), POST (create)
+  │   ├── [id]/route.ts                # GET, PATCH, DELETE (ownership verified)
+  │   ├── my/route.ts                  # GET user's events
+  │   ├── latest/route.ts              # GET latest 6 events (public)
+  │   └── generate-test-data/route.ts  # POST (dev only - creates test data)
   ├── invites/
-  │   ├── route.ts              # POST (send invite)
-  │   ├── [id]/route.ts         # PATCH (update status)
-  │   └── event/[eventId]/route.ts  # GET invites for event
+  │   ├── route.ts                     # POST (send invite)
+  │   ├── [id]/route.ts                # PATCH (update status)
+  │   └── event/[eventId]/route.ts     # GET invites for event
   ├── rsvps/
-  │   ├── route.ts              # POST (upsert RSVP)
-  │   ├── [id]/route.ts         # DELETE
-  │   ├── my/route.ts           # GET user's RSVPs
-  │   └── event/[eventId]/route.ts  # GET RSVPs for event
+  │   ├── route.ts                     # POST (upsert RSVP)
+  │   ├── [id]/route.ts                # DELETE
+  │   ├── my/route.ts                  # GET user's RSVPs
+  │   ├── event/[eventId]/route.ts     # GET RSVPs for event
+  │   └── counts/route.ts              # GET RSVP counts for event
   └── referrals/
-      ├── route.ts              # POST (generate code)
-      ├── [code]/route.ts       # GET (validate)
-      ├── [code]/register/route.ts  # POST (register + auto-RSVP)
-      ├── event/[eventId]/route.ts  # GET codes for event
-      └── analytics/[eventId]/route.ts  # GET analytics (owner only)
+      ├── route.ts                     # POST (generate user's unique code with nanoid)
+      ├── [code]/route.ts              # GET (validate referral code and get associated user)
+      ├── [code]/register/route.ts     # POST (register user via referral)
+      ├── analytics/route.ts           # GET (user's analytics: total clicks, signups, conversion)
+      └── track-click/route.ts         # POST (track anonymous user clicks)
 ```
 
-All API routes handle authentication via `supabase.auth.getUser()` and enforce ownership/permissions via RLS and manual checks.
+All API routes handle authentication via `supabase.auth.getUser()` and enforce ownership/permissions via RLS and manual checks. Public routes (GET events, GET counts, track-click) are configured in middleware.
 
-### TanStack Query Integration
+### Data Fetching Pattern
 
-**Critical**: All data fetching uses TanStack Query hooks (never direct fetch in components). Provider wraps app in `app/layout.tsx`.
-
-Custom hooks in `lib/hooks/`:
-- **use-events.ts**: `useEvents()`, `useEvent(id)`, `useMyEvents()`, `useCreateEvent()`, `useUpdateEvent()`, `useDeleteEvent()`
-- **use-invites.ts**: `useInvites(eventId)`, `useSendInvite()`, `useUpdateInviteStatus()`
-- **use-rsvps.ts**: `useRSVPs(eventId)`, `useMyRSVPs()`, `useCreateRSVP()`, `useDeleteRSVP()`
-- **use-referrals.ts**: `useReferralCodes(eventId)`, `useReferralCode(code)`, `useGenerateReferral()`, `useRegisterWithReferral()`, `useReferralAnalytics(eventId)`
-
-All mutations automatically invalidate related queries for cache consistency.
+Components use direct `fetch()` calls with `useTransition()` and `router.refresh()` for mutations. Server Components fetch data directly from Supabase. No global state management or query caching library is used.
 
 ### Supabase Client Architecture
 
@@ -133,10 +138,27 @@ This project uses `@supabase/ssr` for cookie-based authentication across Next.js
 
 #### Auth Flow
 
-- Middleware (`middleware.ts`) checks authentication on all routes except static assets
-- Unauthenticated users are redirected to `/auth/login` (except from `/` and `/auth/*` paths)
-- Auth routes: `/auth/login`, `/auth/sign-up`, `/auth/forgot-password`, `/auth/update-password`, `/auth/confirm`
-- Protected area: `/protected/*`
+Middleware (`middleware.ts`) handles authentication and redirects:
+
+**Public Routes** (no auth required):
+- `/` - Home page
+- `/events` and `/events/[id]` - View events (read-only)
+- `/auth/*` - All auth pages
+- GET `/api/events`, `/api/events/[id]`, `/api/events/latest` - Public API
+- GET `/api/rsvps/counts`, `/api/rsvps/event/[eventId]` - Public RSVP data
+- POST `/api/referrals/track-click` - Anonymous click tracking
+
+**Protected Routes** (require full authentication, not anonymous):
+- `/events/create` - Create new events
+- `/invites` - View and manage invites
+- `/protected/*` - Protected area
+- All POST/PATCH/DELETE API endpoints (except track-click)
+
+**Anonymous User Behavior**:
+- Anonymous sessions are created when users click referral links
+- Anonymous users can browse but cannot create/modify content
+- Converting from anonymous to authenticated preserves their session
+- Only anonymous users trigger click tracking in referral system
 
 ### TypeScript Types
 
@@ -162,3 +184,122 @@ Configured in `tsconfig.json`:
 - Input styles: `flex h-9 w-full rounded-md border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 dark:focus-visible:ring-gray-300`
 
 The `cn()` utility in `lib/utils.ts` uses only `clsx` for conditional class names.
+
+## Testing
+
+Uses Vitest for testing with 80% coverage threshold requirement.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+- **Test files**: Located in `__tests__/` directory or colocated with source files as `*.test.ts`
+- **Mocks**: Supabase client mocks in `__tests__/mocks/supabase.ts`
+- **Setup**: Global test setup in `__tests__/setup.ts`
+- **Coverage scope**: Focuses on `app/api/**/*.ts` and `lib/utils.ts` (components excluded)
+
+### Writing Tests for API Routes
+
+API route tests use mocked Supabase clients. Example pattern:
+
+```typescript
+import { vi } from 'vitest'
+import { GET } from './route'
+
+// Mock Supabase
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn()
+}))
+
+// Test with mocked responses
+test('should return events', async () => {
+  const mockSupabase = {
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [...], error: null })
+      })
+    }),
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: {...} } }) }
+  }
+  // ... test implementation
+})
+```
+
+## Component Architecture
+
+### Server vs Client Components
+
+**Server Components** (default):
+- All pages in `app/**/page.tsx` are Server Components
+- Fetch data directly from Supabase using `createClient()` from `lib/supabase/server.ts`
+- Pass data as props to Client Components
+- Examples: `app/events/[id]/page.tsx`, `app/events/page.tsx`
+
+**Client Components** (with `'use client'` directive):
+- Interactive components that need state, effects, or event handlers
+- Use `createClient()` from `lib/supabase/client.ts` if needed
+- Examples: `components/event-rsvp-section.tsx`, `components/events-list.tsx`
+
+### Key Component Patterns
+
+**Event Display**:
+- `components/event-card.tsx` - Reusable event card with gradient header
+- `components/events-list.tsx` - Paginated list with upcoming/past sections
+- `lib/utils/event-utils.ts` - Shared utilities for gradients, date formatting, past event detection
+
+**Form Handling**:
+- Use `useTransition()` for pending states during mutations
+- Call `router.refresh()` after successful mutations to revalidate Server Component data
+- Validate inputs before submission (e.g., `app/events/create/page.tsx`)
+
+**Analytics Integration**:
+- Vercel Analytics via `@vercel/analytics` package
+- Track events using `track()` function from `@vercel/analytics`
+- Examples: RSVP actions, past events viewed, referral clicks
+
+## Referral System Flow
+
+**User-based referral system** - each user gets one unique code (not tied to specific events):
+
+1. **Code Generation**: User creates their referral code via `/api/referrals` (uses `nanoid(10)`)
+   - One code per user, stored in `referral_codes` table
+   - Code can be used to share any content, not event-specific
+2. **Click Tracking**: Anonymous users clicking referral links trigger `/api/referrals/track-click`
+   - Creates anonymous session if none exists
+   - Tracks click in `referral_clicks` table (one per anon user per code via unique constraint)
+3. **Registration**: When anon user signs up, `/api/referrals/[code]/register` is called
+   - Creates entry in `referral_registrations` (one per user per code via unique constraint)
+   - Converts anonymous session to authenticated user
+4. **Analytics**: Users view their own analytics at `/api/referrals/analytics`
+   - Returns: total clicks, total signups, conversion rate for user's referral code
+   - Only accessible to the code owner (ownership verified)
+
+## Known Issues & Considerations
+
+### Timezone Handling
+- Event dates are stored as DATE (YYYY-MM-DD) and times as TIME (HH:MM)
+- **Important**: Date parsing from string creates UTC midnight, but time setting uses local timezone
+- Past event detection in `lib/utils/event-utils.ts` and `components/event-rsvp-section.tsx` may have edge cases with timezone boundaries
+- Event creation in `app/events/create/page.tsx` converts `datetime-local` input to date/time parts
+
+### Data Fetching
+- Currently uses direct fetch + `router.refresh()` pattern
+- No global loading states or error boundaries
+- Mutations don't have optimistic updates
+
+### Security Notes
+- All API routes require authentication except explicitly public ones (defined in middleware)
+- Ownership checks are manual (not purely RLS-based) in update/delete endpoints
+- Input validation is basic - consider adding Zod or similar for production
+- Console logging in production may expose internal details

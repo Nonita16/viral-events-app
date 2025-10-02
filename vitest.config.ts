@@ -9,6 +9,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      include: [
+        'app/api/**/*.ts',
+        'lib/utils.ts',
+      ],
       exclude: [
         'node_modules/**',
         '.next/**',
@@ -19,7 +23,14 @@ export default defineConfig({
         '__tests__/**',
         '**/*.test.ts',
         '**/*.test.tsx',
-        'components/**', // Excluding UI components from coverage
+        'app/**/page.tsx',
+        'app/**/layout.tsx',
+        'app/api/**/generate-test-data/**',
+        'app/api/auth/**',
+        'components/**',
+        'lib/supabase/**',
+        'lib/providers/**',
+        'middleware.ts',
       ],
       thresholds: {
         statements: 80,

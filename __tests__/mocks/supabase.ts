@@ -9,6 +9,7 @@ export const createMockSupabaseClient = (options: {
   data?: any
   error?: any
   count?: number
+  multipleQueries?: Array<{ data?: any; error?: any }>
 } = {}) => {
   const {
     user = mockUser(),
@@ -87,7 +88,12 @@ export const createMockSupabaseClient = (options: {
   }
 
   // Make the chain thenable to handle direct await
+  let callIndex = 0
   mockClient.from = vi.fn().mockImplementation(() => {
+    const currentData = options.multipleQueries?.[callIndex]?.data ?? data
+    const currentError = options.multipleQueries?.[callIndex]?.error ?? error
+    callIndex++
+
     const query = {
       select: vi.fn().mockReturnThis(),
       insert: vi.fn().mockReturnThis(),
@@ -96,15 +102,19 @@ export const createMockSupabaseClient = (options: {
       upsert: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       neq: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data, error }),
-      maybeSingle: vi.fn().mockResolvedValue({ data, error }),
+      single: vi.fn().mockResolvedValue({ data: currentData, error: currentError }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: currentData, error: currentError }),
     }
 
     // Make the query chain thenable for direct awaiting
     Object.assign(query, {
-      then: (resolve: any) => resolve({ data, error, count }),
+      then: (resolve: any) => resolve({ data: currentData, error: currentError, count }),
     })
 
     return query

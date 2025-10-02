@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mockInvite } from '@/__tests__/helpers'
+import { mockRSVP } from '@/__tests__/helpers'
 import { createMockSupabaseClient } from '@/__tests__/mocks/supabase'
 
 const mockCreateClient = vi.fn()
@@ -9,44 +9,36 @@ vi.mock('@/lib/supabase/server', () => ({
 
 const { GET } = await import('./route')
 
-describe('GET /api/invites/event/[eventId]', () => {
+describe('GET /api/rsvps/event/[eventId]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('should return invites for event', async () => {
-    const invites = [
-      mockInvite({ event_id: 'event-123' }),
-      mockInvite({ event_id: 'event-123' }),
+  it('should return RSVPs for event', async () => {
+    const rsvps = [
+      mockRSVP({ event_id: 'event-123' }),
+      mockRSVP({ event_id: 'event-123' }),
     ]
 
-    const mockClient = createMockSupabaseClient({
-      multipleQueries: [
-        { data: { created_by: 'user-123' }, error: null },  // Event ownership check
-        { data: invites, error: null },  // Invites fetch
-      ]
-    })
+    const mockClient = createMockSupabaseClient({ data: rsvps })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites/event/event-123')
+    const request = new Request('http://localhost/api/rsvps/event/event-123')
     const params = Promise.resolve({ eventId: 'event-123' })
     const response = await GET(request, { params })
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.invites).toEqual(invites)
+    expect(data.rsvps).toEqual(rsvps)
   })
 
   it('should return 500 on database error', async () => {
     const mockClient = createMockSupabaseClient({
-      multipleQueries: [
-        { data: { created_by: 'user-123' }, error: null },  // Event ownership check
-        { data: null, error: { message: 'Database error' } },  // Invites fetch error
-      ]
+      error: { message: 'Database error' },
     })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites/event/event-123')
+    const request = new Request('http://localhost/api/rsvps/event/event-123')
     const params = Promise.resolve({ eventId: 'event-123' })
     const response = await GET(request, { params })
     const data = await response.json()

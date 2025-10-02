@@ -28,12 +28,20 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const { title, description, location, event_date, event_time, image_url } = body
+  const { title, description, location, event_date, event_time } = body
 
   if (!title || !event_date) {
     return NextResponse.json(
       { error: 'Title and event_date are required' },
       { status: 400 }
+    )
+  }
+
+  // Check for anonymous users
+  if (user.is_anonymous) {
+    return NextResponse.json(
+      { error: 'Full authentication required' },
+      { status: 401 }
     )
   }
 
@@ -46,7 +54,6 @@ export async function POST(request: Request) {
       location,
       event_date,
       event_time,
-      image_url,
     })
     .select()
     .single()

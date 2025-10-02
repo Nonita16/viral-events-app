@@ -10,6 +10,7 @@ type ReferralRegistration = Database['public']['Tables']['referral_registrations
 export const mockEvent = (overrides?: Partial<Event>): Event => ({
   id: 'event-123',
   created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
   created_by: 'user-123',
   title: 'Test Event',
   description: 'Test Description',
@@ -23,6 +24,7 @@ export const mockEvent = (overrides?: Partial<Event>): Event => ({
 export const mockRSVP = (overrides?: Partial<RSVP>): RSVP => ({
   id: 'rsvp-123',
   created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
   event_id: 'event-123',
   user_id: 'user-123',
   status: 'going',
@@ -57,13 +59,15 @@ export const mockReferralRegistration = (overrides?: Partial<ReferralRegistratio
   ...overrides,
 })
 
-export const mockUser = () => ({
+export const mockUser = (overrides?: { is_anonymous?: boolean }) => ({
   id: 'user-123',
   email: 'test@example.com',
   aud: 'authenticated',
   role: 'authenticated',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  is_anonymous: false,
+  ...overrides,
 })
 
 export const mockSession = () => ({

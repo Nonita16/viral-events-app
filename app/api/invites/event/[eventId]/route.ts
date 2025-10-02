@@ -9,6 +9,23 @@ export async function GET(
   const supabase = await createClient()
   const { eventId } = await params
 
+  // Check authentication
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Verify user is the event creator
+  const { data: event } = await supabase
+    .from('events')
+    .select('created_by')
+    .eq('id', eventId)
+    .single()
+
+  if (!event || event.created_by !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const { data: invites, error } = await supabase
     .from('invites')
     .select('*')

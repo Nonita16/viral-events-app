@@ -110,4 +110,42 @@ describe('PATCH /api/invites/[id]', () => {
     expect(response.status).toBe(403)
     expect(data).toEqual({ error: 'Forbidden' })
   })
+
+  it('should return 500 when update fails', async () => {
+    const user = mockUser()
+    const existingInvite = mockInvite({ id: 'invite-123', sent_by: user.id })
+
+    const mockClient = createMockSupabaseClient({ user })
+    let callCount = 0
+    mockClient.from = vi.fn().mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: existingInvite, error: null }),
+        }
+      } else {
+        return {
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } }),
+        }
+      }
+    })
+
+    mockCreateClient.mockResolvedValue(mockClient)
+
+    const request = new Request('http://localhost/api/invites/invite-123', {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'accepted' }),
+    })
+    const params = Promise.resolve({ id: 'invite-123' })
+    const response = await PATCH(request, { params })
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data).toEqual({ error: 'Update failed' })
+  })
 })

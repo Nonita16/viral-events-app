@@ -48,7 +48,7 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { title, description, location, event_date, event_time, image_url } = body
+  const { title, description, location, event_date, event_time } = body
 
   const { data: event, error } = await supabase
     .from('events')
@@ -58,7 +58,6 @@ export async function PATCH(
       location,
       event_date,
       event_time,
-      image_url,
     })
     .eq('id', id)
     .select()

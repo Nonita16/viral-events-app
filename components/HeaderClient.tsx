@@ -5,6 +5,7 @@ import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { track } from '@vercel/analytics'
 import { GradientButton } from './gradient-button'
 import { GenerateTestDataButton } from './generate-test-data-button'
 import { UserAvatarMenu } from './user-avatar-menu'
@@ -88,7 +89,10 @@ export function HeaderClient({ user }: HeaderClientProps) {
         <div className="flex flex-1 justify-end items-center gap-3">
           {user && <GenerateTestDataButton />}
           {user && (
-            <GradientButton href="/events/create">
+            <GradientButton
+              href="/events/create"
+              onClick={() => track('create_event_header_click')}
+            >
               Create Event
             </GradientButton>
           )}
@@ -178,7 +182,10 @@ export function HeaderClient({ user }: HeaderClientProps) {
             {user && (
               <Link
                 href="/events/create"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => {
+                  track('create_event_header_click')
+                  setMobileMenuOpen(false)
+                }}
                 className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold bg-gradient-to-r from-pink-600 to-yellow-600 bg-clip-text text-transparent hover:from-pink-700 hover:to-yellow-700"
               >
                 Create Event

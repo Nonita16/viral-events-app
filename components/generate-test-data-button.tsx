@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 
 export function GenerateTestDataButton() {
   const [isLoading, setIsLoading] = useState(false)
-  const queryClient = useQueryClient()
+  const router = useRouter()
 
   // Only show in development
   if (process.env.NODE_ENV !== 'development') {
@@ -31,11 +31,10 @@ export function GenerateTestDataButton() {
       const data = await response.json()
       alert(`✅ Successfully generated ${data.count} test events!`)
 
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['events'] })
-    } catch (error) {
-      console.error('Error generating test data:', error)
-      alert('❌ Failed to generate test data. See console for details.')
+      // Refresh the page to show new data
+      router.refresh()
+    } catch {
+      alert('❌ Failed to generate test data.')
     } finally {
       setIsLoading(false)
     }

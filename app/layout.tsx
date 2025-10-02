@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { QueryProvider } from "@/lib/providers/query-provider";
 import "./globals.css";
 import Header from "@/components/Header";
 import { Footer } from "@/components/footer";
@@ -32,13 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased min-h-screen bg-gradient-to-br from-pink-50 via-yellow-50 to-pink-100 flex flex-col`}
       >
-        <QueryProvider>
-          <Header />
-          <div className="flex-1">
-            {children}
-          </div>
-          <Footer />
-        </QueryProvider>
+        <Header />
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
         <Analytics />
       </body>
     </html>

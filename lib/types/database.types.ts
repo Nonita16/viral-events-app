@@ -47,7 +47,6 @@ export type Database = {
           event_date: string
           event_time: string | null
           id: string
-          image_url: string | null
           location: string | null
           title: string
           updated_at: string | null
@@ -59,7 +58,6 @@ export type Database = {
           event_date: string
           event_time?: string | null
           id?: string
-          image_url?: string | null
           location?: string | null
           title: string
           updated_at?: string | null
@@ -71,7 +69,6 @@ export type Database = {
           event_date?: string
           event_time?: string | null
           id?: string
-          image_url?: string | null
           location?: string | null
           title?: string
           updated_at?: string | null
@@ -147,63 +144,42 @@ export type Database = {
           code: string
           created_at: string | null
           created_by: string
-          event_id: string
           id: string
         }
         Insert: {
           code: string
           created_at?: string | null
           created_by: string
-          event_id: string
           id?: string
         }
         Update: {
           code?: string
           created_at?: string | null
           created_by?: string
-          event_id?: string
           id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "referral_codes_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       referral_registrations: {
         Row: {
           created_at: string | null
-          event_id: string
           id: string
           referral_code_id: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
-          event_id: string
           id?: string
           referral_code_id: string
           user_id: string
         }
         Update: {
           created_at?: string | null
-          event_id?: string
           id?: string
           referral_code_id?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "referral_registrations_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "referral_registrations_referral_code_id_fkey"
             columns: ["referral_code_id"]

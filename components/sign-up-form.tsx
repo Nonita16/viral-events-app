@@ -61,8 +61,7 @@ export function SignUpForm({
             // Clear the referral code from localStorage
             localStorage.removeItem('referral_code');
           }
-        } catch (conversionError) {
-          console.error('Failed to track referral conversion:', conversionError);
+        } catch {
           // Don't fail signup if conversion tracking fails
         }
       }

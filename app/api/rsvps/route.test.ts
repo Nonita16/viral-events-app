@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mockInvite, mockUser } from '@/__tests__/helpers'
+import { mockRSVP, mockUser } from '@/__tests__/helpers'
 import { createMockSupabaseClient } from '@/__tests__/mocks/supabase'
 
 const mockCreateClient = vi.fn()
@@ -9,23 +9,23 @@ vi.mock('@/lib/supabase/server', () => ({
 
 const { POST } = await import('./route')
 
-describe('POST /api/invites', () => {
+describe('POST /api/rsvps', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('should create invite when authenticated', async () => {
+  it('should create RSVP when authenticated', async () => {
     const user = mockUser()
-    const invite = mockInvite({ event_id: 'event-123', sent_to_email: 'test@example.com' })
+    const rsvp = mockRSVP({ event_id: 'event-123', user_id: user.id, status: 'going' })
 
-    const mockClient = createMockSupabaseClient({ user, data: invite })
+    const mockClient = createMockSupabaseClient({ user, data: rsvp })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites', {
+    const request = new Request('http://localhost/api/rsvps', {
       method: 'POST',
       body: JSON.stringify({
         event_id: 'event-123',
-        sent_to_email: 'test@example.com',
+        status: 'going',
       }),
     })
 
@@ -33,18 +33,18 @@ describe('POST /api/invites', () => {
     const data = await response.json()
 
     expect(response.status).toBe(201)
-    expect(data.invite).toEqual(invite)
+    expect(data.rsvp).toEqual(rsvp)
   })
 
   it('should return 401 when not authenticated', async () => {
     const mockClient = createMockSupabaseClient({ user: null })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites', {
+    const request = new Request('http://localhost/api/rsvps', {
       method: 'POST',
       body: JSON.stringify({
         event_id: 'event-123',
-        sent_to_email: 'test@example.com',
+        status: 'going',
       }),
     })
 
@@ -60,10 +60,10 @@ describe('POST /api/invites', () => {
     const mockClient = createMockSupabaseClient({ user })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites', {
+    const request = new Request('http://localhost/api/rsvps', {
       method: 'POST',
       body: JSON.stringify({
-        sent_to_email: 'test@example.com',
+        status: 'going',
       }),
     })
 
@@ -71,15 +71,15 @@ describe('POST /api/invites', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data).toEqual({ error: 'event_id and sent_to_email are required' })
+    expect(data).toEqual({ error: 'event_id and status are required' })
   })
 
-  it('should return 400 when sent_to_email is missing', async () => {
+  it('should return 400 when status is missing', async () => {
     const user = mockUser()
     const mockClient = createMockSupabaseClient({ user })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites', {
+    const request = new Request('http://localhost/api/rsvps', {
       method: 'POST',
       body: JSON.stringify({
         event_id: 'event-123',
@@ -90,7 +90,27 @@ describe('POST /api/invites', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data).toEqual({ error: 'event_id and sent_to_email are required' })
+    expect(data).toEqual({ error: 'event_id and status are required' })
+  })
+
+  it('should return 400 when status is invalid', async () => {
+    const user = mockUser()
+    const mockClient = createMockSupabaseClient({ user })
+    mockCreateClient.mockResolvedValue(mockClient)
+
+    const request = new Request('http://localhost/api/rsvps', {
+      method: 'POST',
+      body: JSON.stringify({
+        event_id: 'event-123',
+        status: 'invalid',
+      }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data).toEqual({ error: 'Valid status is required (going, maybe, not_going)' })
   })
 
   it('should return 500 on database error', async () => {
@@ -101,11 +121,11 @@ describe('POST /api/invites', () => {
     })
     mockCreateClient.mockResolvedValue(mockClient)
 
-    const request = new Request('http://localhost/api/invites', {
+    const request = new Request('http://localhost/api/rsvps', {
       method: 'POST',
       body: JSON.stringify({
         event_id: 'event-123',
-        sent_to_email: 'test@example.com',
+        status: 'going',
       }),
     })
 

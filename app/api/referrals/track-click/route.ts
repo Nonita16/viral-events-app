@@ -1,13 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Helper function to validate UUID format
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  return uuidRegex.test(uuid)
+}
+
 // POST /api/referrals/track-click - Track referral link click
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
 
     const body = await request.json()
-    const { code } = body
+    const { code, anonUserId } = body
 
     if (!code) {
       return NextResponse.json(
@@ -16,16 +22,40 @@ export async function POST(request: Request) {
       )
     }
 
-    // Get current user (might be anonymous)
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-    if (userError) {
-      console.error('Auth error:', userError)
-      return NextResponse.json({ error: 'Authentication error', details: userError.message }, { status: 401 })
+    // Validate anonUserId format if provided (must be UUID)
+    if (anonUserId && !isValidUUID(anonUserId)) {
+      return NextResponse.json(
+        { error: 'Invalid user identifier format' },
+        { status: 400 }
+      )
     }
 
-    if (!user) {
-      return NextResponse.json({ error: 'No session found' }, { status: 401 })
+    // Get current user (might be anonymous or might not exist)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // Determine the anonymous user ID
+    let trackingUserId: string | null = null
+
+    if (user?.is_anonymous) {
+      // Prefer authenticated anonymous user ID from session
+      trackingUserId = user.id
+
+      // If client also sent anonUserId, verify they match
+      if (anonUserId && anonUserId !== user.id) {
+        console.warn('User ID mismatch - session:', user.id, 'provided:', anonUserId)
+        // Still use session user ID as it's more authoritative
+      }
+    } else if (anonUserId) {
+      // Use client-provided anonymous user ID (from signInAnonymously response)
+      // This handles the case where cookies aren't set yet
+      trackingUserId = anonUserId
+    } else if (user && !user.is_anonymous) {
+      // Don't track clicks for fully registered users
+      return NextResponse.json({ message: 'Click not tracked - user already registered' })
+    }
+
+    if (!trackingUserId) {
+      return NextResponse.json({ error: 'Unable to track click - no user identifier' }, { status: 400 })
     }
 
     // Find the referral code
@@ -35,29 +65,19 @@ export async function POST(request: Request) {
       .eq('code', code)
       .single()
 
-    if (codeError) {
-      console.error('Referral code lookup error:', codeError)
-      return NextResponse.json({ error: 'Invalid referral code', details: codeError.message }, { status: 404 })
-    }
-
-    if (!referralCode) {
+    if (codeError || !referralCode) {
       return NextResponse.json({ error: 'Referral code not found' }, { status: 404 })
     }
 
-    // Check if this anon user already clicked this link
-    const { data: existingClick, error: checkError } = await supabase
+    // Check if click already tracked for this anonymous user
+    const { data: existingClick } = await supabase
       .from('referral_clicks')
       .select('id')
       .eq('referral_code_id', referralCode.id)
-      .eq('anon_user_id', user.id)
+      .eq('anon_user_id', trackingUserId)
       .maybeSingle()
 
-    if (checkError) {
-      console.error('Check existing click error:', checkError)
-    }
-
     if (existingClick) {
-      // Already tracked, don't double-count
       return NextResponse.json({ message: 'Click already tracked' })
     }
 
@@ -66,17 +86,17 @@ export async function POST(request: Request) {
       .from('referral_clicks')
       .insert({
         referral_code_id: referralCode.id,
-        anon_user_id: user.id,
+        anon_user_id: trackingUserId,
       })
 
     if (insertError) {
-      console.error('Insert click error:', insertError)
-      return NextResponse.json({ error: 'Failed to track click', details: insertError.message }, { status: 500 })
+      console.error('Insert error:', insertError)
+      return NextResponse.json({ error: 'Failed to track click' }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Click tracked successfully' })
-  } catch (error) {
-    console.error('Unexpected error in track-click:', error)
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
+  } catch (err) {
+    console.error('Track click error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

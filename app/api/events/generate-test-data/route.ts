@@ -69,7 +69,7 @@ function getRandomTime(): string {
   return `${String(hour).padStart(2, '0')}:${minute}:00`
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   if (!isDevelopment) {
     return NextResponse.json(
       { error: 'This endpoint is only available in development' },
@@ -129,8 +129,7 @@ export async function POST(request: Request) {
       count: insertedEvents?.length || 0,
       events: insertedEvents,
     })
-  } catch (error) {
-    console.error('Error generating test events:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to generate test events' },
       { status: 500 }

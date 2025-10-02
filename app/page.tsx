@@ -1,11 +1,39 @@
-import { GradientButton } from "@/components/gradient-button";
-import { LatestEvents } from "@/components/latest-events";
+import { HomeCreateButton } from "@/components/home-create-button";
+import { LatestEventsClient } from "@/components/latest-events-client";
 import { ReferralTracker } from "@/components/referral-tracker";
 import { createClient } from "@/lib/supabase/server";
+
 export default async function Home() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
+
+  // Fetch latest 3 upcoming events
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000'
+  const res = await fetch(
+    `${baseUrl}/api/events/latest`,
+    { cache: 'no-store' }
+  )
+
+  const eventsData = res.ok ? await res.json() : { events: [] }
+  const events = eventsData.events || []
+
+  // Fetch RSVP counts for these events
+  const { data: allRsvps } = await supabase
+    .from('rsvps')
+    .select('event_id, status')
+
+  // Calculate RSVP counts per event
+  const rsvpCounts = (allRsvps || []).reduce((acc, rsvp) => {
+    if (!acc[rsvp.event_id]) {
+      acc[rsvp.event_id] = { going: 0, maybe: 0 }
+    }
+    if (rsvp.status === 'going') acc[rsvp.event_id].going++
+    if (rsvp.status === 'maybe') acc[rsvp.event_id].maybe++
+    return acc
+  }, {} as Record<string, { going: number; maybe: number }>)
   return (
     <main className="flex-1">
       <ReferralTracker />
@@ -44,12 +72,10 @@ export default async function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <GradientButton
+            <HomeCreateButton
               href={user ? "/events/create" : "/auth/sign-up"}
               className="text-xl px-12 py-5 text-lg font-bold"
-            >
-              🚀 Start Creating
-            </GradientButton>
+            />
           </div>
 
           {/* Stats or Social Proof */}
@@ -84,10 +110,10 @@ export default async function Home() {
               Latest Events
             </h2>
             <p className="text-xl text-gray-600">
-              Check out what's happening in your community
+              Check out what&apos;s happening in your community
             </p>
           </div>
-          <LatestEvents />
+          <LatestEventsClient events={events} rsvpCounts={rsvpCounts} />
         </div>
       </section>
     </main>

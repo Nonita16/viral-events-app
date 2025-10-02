@@ -11,6 +11,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Check for anonymous users
+  if (user.is_anonymous) {
+    return NextResponse.json(
+      { error: 'Full authentication required' },
+      { status: 401 }
+    )
+  }
+
   const body = await request.json()
   const { event_id, status } = body
 

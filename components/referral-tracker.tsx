@@ -23,21 +23,55 @@ export function ReferralTracker() {
 
       const supabase = createClient()
 
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession()
+      // Try to get existing session
+      let { data: { session } } = await supabase.auth.getSession()
+      let userId: string | null = null
+      let cookiesReady = false
+
+      if (session) {
+        // Use existing session user ID
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.is_anonymous) {
+          userId = user.id
+          cookiesReady = true
+        } else if (user) {
+          // Don't track for registered users
+          console.log('Skip tracking - user already registered')
+          return
+        }
+      }
 
       // If no session, create anonymous session
       if (!session) {
         try {
-          const { error } = await supabase.auth.signInAnonymously()
+          const { data, error } = await supabase.auth.signInAnonymously()
           if (error) {
             console.error('Failed to create anonymous session:', error)
             return
           }
-        } catch (error) {
-          console.error('Failed to create anonymous session:', error)
+          if (!data.session || !data.user) {
+            console.error('No session or user returned from signInAnonymously')
+            return
+          }
+
+          // Use the user ID from the response
+          userId = data.user.id
+          session = data.session
+
+          console.log('Anonymous session created:', userId)
+
+          // Cookies are not immediately available after signInAnonymously
+          // We'll pass the user ID directly in the request body
+          cookiesReady = false
+        } catch (err) {
+          console.error('Exception creating anonymous session:', err)
           return
         }
+      }
+
+      if (!userId) {
+        console.error('No user ID available for tracking')
+        return
       }
 
       // Track the click
@@ -45,14 +79,21 @@ export function ReferralTracker() {
         const res = await fetch('/api/referrals/track-click', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: referralCode }),
+          body: JSON.stringify({
+            code: referralCode,
+            // Pass user ID for immediate post-signin request (cookies not ready yet)
+            anonUserId: cookiesReady ? undefined : userId
+          }),
         })
 
         if (!res.ok) {
-          const errorData = await res.json()
-          console.error('Failed to track click:', errorData)
+          const errorData = await res.json().catch(() => ({}))
+          console.error('Track click failed:', res.status, errorData)
           return
         }
+
+        const result = await res.json()
+        console.log('Click tracking result:', result)
 
         // Mark as tracked
         hasTracked.current = true
@@ -60,8 +101,8 @@ export function ReferralTracker() {
 
         // Store referral code in localStorage for later attribution
         localStorage.setItem('referral_code', referralCode)
-      } catch (error) {
-        console.error('Failed to track referral click:', error)
+      } catch (err) {
+        console.error('Track click error:', err)
       }
     }
 
