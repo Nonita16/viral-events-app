@@ -7,6 +7,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@tanstack/react-query": "^5.90.2",

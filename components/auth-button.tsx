@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "./logout-button";
+import { UserAvatarMenu } from "./user-avatar-menu";
 import { GradientButton } from "./gradient-button";
 
 export async function AuthButton() {
@@ -11,10 +11,7 @@ export async function AuthButton() {
   const user = data?.claims;
 
   return user ? (
-    <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      <LogoutButton />
-    </div>
+    <UserAvatarMenu email={user.email as string} />
   ) : (
     <div className="flex items-center space-x-3">
       <Link

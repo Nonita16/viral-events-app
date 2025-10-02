@@ -1,8 +1,14 @@
 import React from "react";
 import { AuthButton } from "./auth-button";
+import { GradientButton } from "./gradient-button";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-export default function Header() {
+export default async function Header() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
   return (
     <nav className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-pink-200/30 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,10 +31,12 @@ export default function Header() {
               </Link>
             </div>
           </div>
-          <div className="hidden sm:flex sm:items-center">
+          <div className="hidden sm:flex sm:items-center sm:space-x-3">
+            {user && <GradientButton href="/events/create">Create Event</GradientButton>}
             <AuthButton />
           </div>
-          <div className="sm:hidden flex items-center">
+          <div className="sm:hidden flex items-center space-x-2">
+            {user && <GradientButton href="/events/create">Create Event</GradientButton>}
             <AuthButton />
           </div>
         </div>
