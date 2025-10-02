@@ -1,5 +1,6 @@
 import { GradientButton } from "@/components/gradient-button";
 import { LatestEvents } from "@/components/latest-events";
+import { ReferralTracker } from "@/components/referral-tracker";
 import { createClient } from "@/lib/supabase/server";
 export default async function Home() {
   const supabase = await createClient();
@@ -7,6 +8,7 @@ export default async function Home() {
   const user = data?.claims;
   return (
     <main className="flex-1">
+      <ReferralTracker />
       {/* Hero Section */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-pink-50 via-yellow-50 to-pink-100 overflow-hidden">
         {/* Decorative background elements */}

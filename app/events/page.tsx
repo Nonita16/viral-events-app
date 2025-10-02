@@ -4,7 +4,7 @@ import { useEvents } from "@/lib/hooks/use-events";
 import { useRSVPCounts } from "@/lib/hooks/use-rsvps";
 import { EventCard } from "@/components/event-card";
 import { GradientButton } from "@/components/gradient-button";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function EventsPage() {
@@ -14,6 +14,8 @@ export default function EventsPage() {
   const [upcomingPage, setUpcomingPage] = useState(1);
   const [pastPage, setPastPage] = useState(1);
   const eventsPerPage = 9;
+  const upcomingRef = useRef<HTMLElement>(null);
+  const pastRef = useRef<HTMLElement>(null);
 
   // Get current user
   useMemo(() => {
@@ -26,6 +28,20 @@ export default function EventsPage() {
     };
     getUser();
   }, []);
+
+  // Scroll to upcoming section when page changes
+  useEffect(() => {
+    if (upcomingPage > 1 && upcomingRef.current) {
+      upcomingRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [upcomingPage]);
+
+  // Scroll to past section when page changes
+  useEffect(() => {
+    if (pastPage > 1 && pastRef.current) {
+      pastRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [pastPage]);
 
   // Separate upcoming and past events
   const { upcomingEvents, pastEvents } = useMemo(() => {
@@ -152,7 +168,7 @@ export default function EventsPage() {
 
         {/* Upcoming Events Section */}
         {upcomingEvents.length > 0 && (
-          <section className="mb-16">
+          <section ref={upcomingRef} className="mb-16">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Upcoming Events
             </h2>
@@ -196,7 +212,7 @@ export default function EventsPage() {
 
         {/* Past Events Section */}
         {pastEvents.length > 0 && (
-          <section>
+          <section ref={pastRef}>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Past Events
             </h2>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { GradientButton } from './gradient-button'
 import { GenerateTestDataButton } from './generate-test-data-button'
 import { UserAvatarMenu } from './user-avatar-menu'
@@ -18,27 +19,55 @@ interface HeaderClientProps {
 }
 
 const navigation: Navigation[] = [
-  { name: 'Home', href: '/' },
   { name: 'Events', href: '/events' },
+]
+
+const authenticatedNavigation: Navigation[] = [
+  { name: 'Invites', href: '/invites' },
+  { name: 'Analytics', href: '/analytics' },
 ]
 
 export function HeaderClient({ user }: HeaderClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
 
   return (
     <header className="bg-white/90 backdrop-blur-sm shadow-lg border-b border-pink-200/30 sticky top-0 z-50 w-full">
       <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
         <div className="flex flex-1">
           <div className="hidden lg:flex lg:gap-x-6">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors duration-200"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const isActive = pathname.startsWith(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`text-sm font-semibold transition-colors duration-200 ${
+                    isActive
+                      ? 'text-gray-900 border-b-2 border-pink-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
+            {user && authenticatedNavigation.map((item) => {
+              const isActive = pathname.startsWith(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`text-sm font-semibold transition-colors duration-200 ${
+                    isActive
+                      ? 'text-gray-900 border-b-2 border-pink-600'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
           </div>
           <div className="flex lg:hidden">
             <button
@@ -113,16 +142,40 @@ export function HeaderClient({ user }: HeaderClientProps) {
             </div>
           </div>
           <div className="mt-6 space-y-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const isActive = pathname.startsWith(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold ${
+                    isActive
+                      ? 'text-gray-900 bg-gray-100'
+                      : 'text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
+            {user && authenticatedNavigation.map((item) => {
+              const isActive = pathname.startsWith(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold ${
+                    isActive
+                      ? 'text-gray-900 bg-gray-100'
+                      : 'text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
             {user && (
               <Link
                 href="/events/create"

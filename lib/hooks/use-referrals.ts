@@ -9,7 +9,16 @@ interface ReferralAnalytics {
   id: string
   code: string
   created_at: string
-  registrations_count: number
+  clicks: number
+  signups: number
+  conversion: number
+}
+
+interface ReferralAnalyticsResponse {
+  analytics: ReferralAnalytics[]
+  totalClicks: number
+  totalSignups: number
+  totalConversion: number
 }
 
 // GET referral codes for an event
@@ -87,11 +96,23 @@ export function useReferralAnalytics(eventId: string) {
       const res = await fetch(`/api/referrals/analytics/${eventId}`)
       if (!res.ok) throw new Error('Failed to fetch referral analytics')
       const data = await res.json()
-      return {
-        analytics: data.analytics as ReferralAnalytics[],
-        totalRegistrations: data.totalRegistrations as number,
-      }
+      return data as ReferralAnalyticsResponse
     },
     enabled: !!eventId,
+  })
+}
+
+// TRACK referral click
+export function useTrackReferralClick() {
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const res = await fetch('/api/referrals/track-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      if (!res.ok) throw new Error('Failed to track click')
+      return res.json()
+    },
   })
 }

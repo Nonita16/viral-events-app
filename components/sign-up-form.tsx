@@ -30,14 +30,43 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Check if there's a referral code in localStorage
+      const referralCode = localStorage.getItem('referral_code');
+
+      // Get the current anonymous user ID if exists
+      const { data: { session: anonSession } } = await supabase.auth.getSession();
+      const anonUserId = anonSession?.user?.id;
+
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/protected`,
+          data: {
+            referral_code: referralCode,
+            anon_user_id: anonUserId,
+          }
         },
       });
+
       if (error) throw error;
+
+      // If there's a referral code and we have the new user ID, track the conversion
+      if (referralCode && data.user) {
+        try {
+          const res = await fetch(`/api/referrals/${referralCode}/register`, {
+            method: 'POST',
+          });
+          if (res.ok) {
+            // Clear the referral code from localStorage
+            localStorage.removeItem('referral_code');
+          }
+        } catch (conversionError) {
+          console.error('Failed to track referral conversion:', conversionError);
+          // Don't fail signup if conversion tracking fails
+        }
+      }
+
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");

@@ -36,29 +36,41 @@ export async function GET(
     return NextResponse.json({ error: codesError.message }, { status: 500 })
   }
 
-  // Get registration counts for each referral code
+  // Get clicks and registration counts for each referral code
   const analyticsPromises = referralCodes.map(async (code) => {
-    const { count } = await supabase
+    const { count: clicksCount } = await supabase
+      .from('referral_clicks')
+      .select('*', { count: 'exact', head: true })
+      .eq('referral_code_id', code.id)
+
+    const { count: registrationsCount } = await supabase
       .from('referral_registrations')
       .select('*', { count: 'exact', head: true })
       .eq('referral_code_id', code.id)
 
+    const clicks = clicksCount || 0
+    const signups = registrationsCount || 0
+    const conversion = clicks > 0 ? (signups / clicks) * 100 : 0
+
     return {
       ...code,
-      registrations_count: count || 0,
+      clicks,
+      signups,
+      conversion,
     }
   })
 
   const analytics = await Promise.all(analyticsPromises)
 
-  // Calculate total registrations
-  const totalRegistrations = analytics.reduce(
-    (sum, code) => sum + code.registrations_count,
-    0
-  )
+  // Calculate totals
+  const totalClicks = analytics.reduce((sum, code) => sum + code.clicks, 0)
+  const totalSignups = analytics.reduce((sum, code) => sum + code.signups, 0)
+  const totalConversion = totalClicks > 0 ? (totalSignups / totalClicks) * 100 : 0
 
   return NextResponse.json({
     analytics,
-    totalRegistrations,
+    totalClicks,
+    totalSignups,
+    totalConversion,
   })
 }

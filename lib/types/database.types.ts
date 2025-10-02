@@ -113,6 +113,35 @@ export type Database = {
           },
         ]
       }
+      referral_clicks: {
+        Row: {
+          anon_user_id: string
+          created_at: string | null
+          id: string
+          referral_code_id: string
+        }
+        Insert: {
+          anon_user_id: string
+          created_at?: string | null
+          id?: string
+          referral_code_id: string
+        }
+        Update: {
+          anon_user_id?: string
+          created_at?: string | null
+          id?: string
+          referral_code_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_clicks_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_codes: {
         Row: {
           code: string
