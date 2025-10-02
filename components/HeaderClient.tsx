@@ -24,7 +24,6 @@ const navigation: Navigation[] = [
 
 const authenticatedNavigation: Navigation[] = [
   { name: 'Invites', href: '/invites' },
-  { name: 'Analytics', href: '/analytics' },
 ]
 
 export function HeaderClient({ user }: HeaderClientProps) {

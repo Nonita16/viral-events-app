@@ -4,6 +4,7 @@ import { QueryProvider } from "@/lib/providers/query-provider";
 import "./globals.css";
 import Header from "@/components/Header";
 import { Footer } from "@/components/footer";
+import { Analytics } from "@vercel/analytics/next";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -38,6 +39,7 @@ export default function RootLayout({
           </div>
           <Footer />
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );

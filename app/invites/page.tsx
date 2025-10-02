@@ -85,7 +85,8 @@ export default function InvitesPage() {
 
   const handleCopyLink = () => {
     if (!userReferralCode) return
-    const link = `${window.location.origin}/?ref=${userReferralCode.code}`
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const link = `${baseUrl}/?ref=${userReferralCode.code}`
     navigator.clipboard.writeText(link)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -93,7 +94,8 @@ export default function InvitesPage() {
 
   const handleInviteViaEmail = () => {
     if (!userReferralCode) return
-    const link = `${window.location.origin}/?ref=${userReferralCode.code}`
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const link = `${baseUrl}/?ref=${userReferralCode.code}`
     const subject = 'Join me on My Viral Event!'
     const body = `Hey! Check out this awesome event platform I'm using. Join with my referral link: ${link}`
 
