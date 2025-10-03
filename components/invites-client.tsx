@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { track } from '@vercel/analytics'
 import { GradientButton } from '@/components/gradient-button'
+import { getClientBaseUrl } from '@/lib/utils/get-base-url'
 
 interface InvitesClientProps {
   referralCode: string | null
@@ -57,7 +58,7 @@ export function InvitesClient({ referralCode, analytics }: InvitesClientProps) {
 
   const handleCopyLink = () => {
     track('referral_link_copied')
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const baseUrl = getClientBaseUrl()
     const link = `${baseUrl}/?ref=${code}`
     navigator.clipboard.writeText(link)
     setCopied(true)
@@ -66,7 +67,7 @@ export function InvitesClient({ referralCode, analytics }: InvitesClientProps) {
 
   const handleInviteViaEmail = () => {
     track('referral_email_invite_sent')
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const baseUrl = getClientBaseUrl()
     const link = `${baseUrl}/?ref=${code}`
     const subject = 'Join me on My Viral Event!'
     const body = `Hey! Check out this awesome event platform I'm using. Join with my referral link: ${link}`

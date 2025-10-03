@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { EventRSVPSection } from '@/components/event-rsvp-section'
 import { generateGradient, formatEventDate } from '@/lib/utils/event-utils'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -106,7 +107,7 @@ export default async function EventPage({ params }: EventPageProps) {
       price: '0',
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
-      url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/events/${event.id}`,
+      url: `${getBaseUrl()}/events/${event.id}`,
       validFrom: new Date().toISOString(),
     },
   }

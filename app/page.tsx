@@ -2,6 +2,7 @@ import { HomeCreateButton } from "@/components/home-create-button";
 import { LatestEventsClient } from "@/components/latest-events-client";
 import { ReferralTracker } from "@/components/referral-tracker";
 import { createClient } from "@/lib/supabase/server";
+import { getBaseUrl } from "@/lib/utils/get-base-url";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -9,9 +10,7 @@ export default async function Home() {
   const user = data?.claims;
 
   // Fetch latest 3 upcoming events
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'
+  const baseUrl = getBaseUrl()
   const res = await fetch(
     `${baseUrl}/api/events/latest`,
     { cache: 'no-store' }

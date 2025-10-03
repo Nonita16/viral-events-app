@@ -156,11 +156,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 3. Navigate to Settings → API
 4. Copy the `Project URL` and `anon/public` key
 
-**App URL:**
+**App URL** (Optional but Recommended):
 
-- **Development**: Use `http://localhost:3000`
-- **Production**: Use your deployed domain (e.g., `https://your-app.vercel.app`)
-- Used for generating referral links and SEO metadata
+- **Development**: Automatically uses `http://localhost:3000` (no setup needed)
+- **Production**: Set to your domain (e.g., `https://your-app.vercel.app`) for referral links and SEO
+- If not set in production, falls back to Vercel's auto-provided URL
 
 ### 4. Set Up the Database
 
@@ -198,11 +198,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Required Environment Variables
 
-| Variable                        | Description                 | Where to Find / How to Set                         |
-| ------------------------------- | --------------------------- | -------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL   | Supabase Dashboard → Settings → API                |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Supabase Dashboard → Settings → API                |
-| `NEXT_PUBLIC_APP_URL`           | Your application URL        | `http://localhost:3000` (dev) / Your domain (prod) |
+| Variable                        | Description                 | Where to Find / How to Set                         | Required |
+| ------------------------------- | --------------------------- | -------------------------------------------------- | -------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL   | Supabase Dashboard → Settings → API                | ✅ Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Supabase Dashboard → Settings → API                | ✅ Yes |
+| `NEXT_PUBLIC_APP_URL`           | Your application URL        | Your production domain (auto-detects in dev)       | ⚠️ Recommended |
+
+**Note:** `NEXT_PUBLIC_APP_URL` is optional. The app automatically uses `http://localhost:3000` in development and falls back to Vercel's domain in production if not set.
 
 ### Optional Configuration
 
@@ -610,14 +612,21 @@ git push origin main
 |----------|-------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL (from Supabase Dashboard) | Production, Preview, Development |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key (from Supabase Dashboard) | Production, Preview, Development |
-| `NEXT_PUBLIC_APP_URL` | **Leave empty initially** | All environments |
+| `NEXT_PUBLIC_APP_URL` | Your domain (optional but recommended) | Production only |
 
 **Important for `NEXT_PUBLIC_APP_URL`:**
-1. **First deployment**: Leave `NEXT_PUBLIC_APP_URL` empty or set to a placeholder
-2. **After deployment**: Vercel assigns you a domain (e.g., `your-app.vercel.app`)
-3. **Update variable**: Go back to Settings → Environment Variables
-4. **Set `NEXT_PUBLIC_APP_URL`** to `https://your-app.vercel.app` (your actual Vercel domain)
-5. **Redeploy**: Trigger a new deployment for changes to take effect
+
+The app now intelligently handles URLs:
+- **Development**: Automatically uses `http://localhost:3000` (no setup needed)
+- **Production**: Set `NEXT_PUBLIC_APP_URL` to your domain for best results
+
+**Recommended setup:**
+1. **First deployment**: You can deploy without setting `NEXT_PUBLIC_APP_URL` (it will use Vercel's auto-provided domain)
+2. **After deployment**: Note your Vercel domain (e.g., `your-app.vercel.app`)
+3. **Set the variable**: Add `NEXT_PUBLIC_APP_URL=https://your-app.vercel.app` in Settings → Environment Variables
+4. **Redeploy**: Trigger a new deployment for the change to take effect
+
+**Why set it?** Setting `NEXT_PUBLIC_APP_URL` ensures referral links and metadata use your preferred domain, especially important if you have a custom domain.
 
 **Quick way to add variables via Vercel CLI:**
 ```bash
@@ -664,7 +673,8 @@ If you add a custom domain (e.g., `myevents.com`):
 
 **Important Notes:**
 - ✅ Use the **same Supabase project** for production (or create a separate production Supabase project)
-- ✅ `NEXT_PUBLIC_APP_URL` must match your actual deployed domain for referral links to work
+- ✅ `NEXT_PUBLIC_APP_URL` is optional but recommended for production (improves referral links and SEO)
+- ✅ The app auto-detects development vs production and uses appropriate URLs
 - ✅ All `NEXT_PUBLIC_*` variables are exposed to the browser (never put secrets here)
 - ✅ Redeploy after changing environment variables
 
