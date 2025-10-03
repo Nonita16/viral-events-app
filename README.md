@@ -4,18 +4,24 @@ A modern event management platform with viral sharing capabilities, built to ena
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Requirements](#requirements)
-- [Getting Started](#getting-started)
-- [Environment Setup](#environment-setup)
-- [Database Setup](#database-setup)
-- [Development](#development)
-- [Testing](#testing)
-- [Application Flow](#application-flow)
-- [Project Structure](#project-structure)
-- [Deployment](#deployment)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Requirements](#-requirements)
+- [Getting Started](#-getting-started)
+- [Environment Setup](#-environment-setup)
+- [Database Setup](#-database-setup)
+- [Development](#-development)
+- [Testing](#-testing)
+- [Application Flow](#-application-flow)
+- [Project Structure](#-project-structure)
+- [Deployment](#-deployment)
+- [Security Considerations](#-security-considerations)
+- [API Documentation](#-api-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#-acknowledgments)
+- [Support](#-support)
 
 ## 🎯 Overview
 
@@ -115,7 +121,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Nonita16/viral-event-app.git
+git clone https://github.com/Nonita16/viral-events-app.git
 cd viral-events-app
 ```
 
@@ -144,12 +150,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 **To get your credentials:**
 
 **Supabase:**
+
 1. Go to [Supabase Dashboard](https://app.supabase.com)
 2. Create a new project or select existing one
 3. Navigate to Settings → API
 4. Copy the `Project URL` and `anon/public` key
 
 **App URL:**
+
 - **Development**: Use `http://localhost:3000`
 - **Production**: Use your deployed domain (e.g., `https://your-app.vercel.app`)
 - Used for generating referral links and SEO metadata
@@ -190,10 +198,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Required Environment Variables
 
-| Variable                        | Description                 | Where to Find / How to Set                       |
-| ------------------------------- | --------------------------- | ------------------------------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL   | Supabase Dashboard → Settings → API              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Supabase Dashboard → Settings → API              |
+| Variable                        | Description                 | Where to Find / How to Set                         |
+| ------------------------------- | --------------------------- | -------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL   | Supabase Dashboard → Settings → API                |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Supabase Dashboard → Settings → API                |
 | `NEXT_PUBLIC_APP_URL`           | Your application URL        | `http://localhost:3000` (dev) / Your domain (prod) |
 
 ### Optional Configuration
@@ -583,25 +591,108 @@ viral-events-app/
 
 ### Vercel Deployment (Recommended)
 
-1. Push your code to GitHub/GitLab/Bitbucket
-2. Import project to [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_APP_URL` (set to your Vercel domain)
-4. Deploy
+#### Step 1: Push to Git Repository
+```bash
+git push origin main
+```
+
+#### Step 2: Import to Vercel
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+2. Click **"Add New Project"**
+3. Import your Git repository
+4. Vercel will auto-detect Next.js - keep default settings
+
+#### Step 3: Configure Environment Variables
+
+**In Vercel Dashboard → Settings → Environment Variables, add:**
+
+| Variable | Value | Environment |
+|----------|-------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL (from Supabase Dashboard) | Production, Preview, Development |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key (from Supabase Dashboard) | Production, Preview, Development |
+| `NEXT_PUBLIC_APP_URL` | **Leave empty initially** | All environments |
+
+**Important for `NEXT_PUBLIC_APP_URL`:**
+1. **First deployment**: Leave `NEXT_PUBLIC_APP_URL` empty or set to a placeholder
+2. **After deployment**: Vercel assigns you a domain (e.g., `your-app.vercel.app`)
+3. **Update variable**: Go back to Settings → Environment Variables
+4. **Set `NEXT_PUBLIC_APP_URL`** to `https://your-app.vercel.app` (your actual Vercel domain)
+5. **Redeploy**: Trigger a new deployment for changes to take effect
+
+**Quick way to add variables via Vercel CLI:**
+```bash
+# Install Vercel CLI (if not installed)
+npm i -g vercel
+
+# Login to Vercel
+vercel login
+
+# Link your project
+vercel link
+
+# Add environment variables
+vercel env add NEXT_PUBLIC_SUPABASE_URL production
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
+vercel env add NEXT_PUBLIC_APP_URL production
+
+# Redeploy with new env vars
+vercel --prod
+```
+
+#### Step 4: Deploy
+Click **"Deploy"** - Vercel will build and deploy your app.
 
 ### Environment Variables for Production
 
-Ensure all environment variables are set in your deployment platform:
+**Production values (Vercel):**
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-production-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-production-anon-key
-NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
+# From Supabase Dashboard → Settings → API
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Your Vercel domain (get this AFTER first deployment)
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 ```
 
-**Important**: Set `NEXT_PUBLIC_APP_URL` to your production domain (e.g., `https://your-app.vercel.app`) for referral links to work correctly.
+**Custom Domain Setup:**
+
+If you add a custom domain (e.g., `myevents.com`):
+1. Add your custom domain in Vercel → Settings → Domains
+2. Update `NEXT_PUBLIC_APP_URL` to `https://myevents.com`
+3. Redeploy
+
+**Important Notes:**
+- ✅ Use the **same Supabase project** for production (or create a separate production Supabase project)
+- ✅ `NEXT_PUBLIC_APP_URL` must match your actual deployed domain for referral links to work
+- ✅ All `NEXT_PUBLIC_*` variables are exposed to the browser (never put secrets here)
+- ✅ Redeploy after changing environment variables
+
+### Quick Reference: Environment Variables by Environment
+
+| Variable | Development (Local) | Production (Vercel) |
+|----------|---------------------|---------------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | From Supabase Dashboard | Same as development (or separate project) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | From Supabase Dashboard | Same as development (or separate project) |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | `https://your-app.vercel.app` |
+
+### How to Update Environment Variables in Vercel
+
+**Via Dashboard (easiest):**
+1. Go to your project on [Vercel](https://vercel.com)
+2. Click **Settings** → **Environment Variables**
+3. Edit or add variables
+4. Select which environments (Production/Preview/Development)
+5. Click **Save**
+6. Go to **Deployments** → Click **⋯** → **Redeploy**
+
+**Via CLI (advanced):**
+```bash
+vercel env ls                    # List all env variables
+vercel env add MY_VAR            # Add new variable
+vercel env rm MY_VAR production  # Remove variable
+vercel --prod                    # Redeploy to production
+```
 
 ### Build Command
 
