@@ -72,9 +72,12 @@ Required environment variables (see `.env.example`):
 ```
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Get these from: https://app.supabase.com/project/_/settings/api
+Get Supabase credentials from: https://app.supabase.com/project/_/settings/api
+
+`NEXT_PUBLIC_APP_URL` is used for generating referral links and SEO metadata. Use `http://localhost:3000` for development and your production domain for deployment.
 
 Rename `.env.example` to `.env.local` and populate before running locally. Create a Supabase project at https://database.new
 
@@ -187,7 +190,7 @@ The `cn()` utility in `lib/utils.ts` uses only `clsx` for conditional class name
 
 ## Testing
 
-Uses Vitest for testing with 80% coverage threshold requirement.
+Uses Vitest for testing with 80% coverage threshold requirement (currently at 94.91% coverage).
 
 ### Running Tests
 
@@ -208,6 +211,7 @@ npm run test:coverage
 - **Mocks**: Supabase client mocks in `__tests__/mocks/supabase.ts`
 - **Setup**: Global test setup in `__tests__/setup.ts`
 - **Coverage scope**: Focuses on `app/api/**/*.ts` and `lib/utils.ts` (components excluded)
+- **Current coverage**: 94.91% (statements), 93.15% (branches), 100% (functions), 94.91% (lines)
 
 ### Writing Tests for API Routes
 

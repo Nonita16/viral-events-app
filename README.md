@@ -22,6 +22,7 @@ A modern event management platform with viral sharing capabilities, built to ena
 Viral Events App is a full-stack Next.js application that combines event management with a sophisticated referral tracking system. Users can create and manage events, send invitations, track RSVPs, and leverage a viral referral system to grow their audience. The platform features anonymous user tracking, real-time analytics, and a comprehensive authentication system.
 
 **Key Differentiators:**
+
 - User-based referral codes (not event-specific) for maximum flexibility
 - Anonymous session tracking that seamlessly converts to authenticated users
 - Real-time conversion tracking with click analytics
@@ -32,23 +33,27 @@ Viral Events App is a full-stack Next.js application that combines event managem
 ### Core Functionality
 
 - **Event Management**
+
   - Create, edit, and delete events
   - Single-day events with optional time
   - Event details: title, description, location, date/time
   - Public event browsing and private event creation
 
 - **RSVP System**
+
   - Three status options: Going, Maybe, Not Going
   - Real-time RSVP counts
   - User-specific RSVP tracking
   - One RSVP per user per event
 
 - **Invitation System**
+
   - Email-based invitations
   - Invite status tracking: Pending, Accepted, Declined
   - Event-specific invite management
 
 - **Referral & Analytics**
+
   - Unique referral code per user (10-character nanoid)
   - Anonymous click tracking
   - Conversion tracking from anonymous to registered users
@@ -66,6 +71,7 @@ Viral Events App is a full-stack Next.js application that combines event managem
 ## 🛠 Tech Stack
 
 ### Frontend
+
 - **Next.js 15** - React framework with App Router
 - **React 19** - UI library
 - **TypeScript** - Type safety
@@ -73,6 +79,7 @@ Viral Events App is a full-stack Next.js application that combines event managem
 - **Turbopack** - Fast bundler for development
 
 ### Backend
+
 - **Next.js API Routes** - Serverless API endpoints
 - **Supabase** - Backend as a Service
   - PostgreSQL database
@@ -81,12 +88,14 @@ Viral Events App is a full-stack Next.js application that combines event managem
 - **@supabase/ssr** - Cookie-based auth for Next.js
 
 ### Testing & Quality
+
 - **Vitest** - Unit testing framework
 - **ESLint** - Code linting
 - **TypeScript** - Static type checking
-- **80% test coverage** requirement (API routes only)
+- **94.91% test coverage** achieved (API routes only)
 
 ### Utilities
+
 - **nanoid** - Unique ID generation for referral codes
 - **clsx** - Conditional CSS classes
 - **@vercel/analytics** - User analytics tracking
@@ -106,7 +115,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Nonita16/viral-event-app.git
 cd viral-events-app
 ```
 
@@ -129,13 +138,21 @@ Edit `.env.local` and add your Supabase credentials:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-**To get your Supabase credentials:**
+**To get your credentials:**
+
+**Supabase:**
 1. Go to [Supabase Dashboard](https://app.supabase.com)
 2. Create a new project or select existing one
 3. Navigate to Settings → API
 4. Copy the `Project URL` and `anon/public` key
+
+**App URL:**
+- **Development**: Use `http://localhost:3000`
+- **Production**: Use your deployed domain (e.g., `https://your-app.vercel.app`)
+- Used for generating referral links and SEO metadata
 
 ### 4. Set Up the Database
 
@@ -173,10 +190,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Required Environment Variables
 
-| Variable | Description | Where to Find |
-|----------|-------------|---------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Supabase Dashboard → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Supabase Dashboard → Settings → API |
+| Variable                        | Description                 | Where to Find / How to Set                       |
+| ------------------------------- | --------------------------- | ------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL   | Supabase Dashboard → Settings → API              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Supabase Dashboard → Settings → API              |
+| `NEXT_PUBLIC_APP_URL`           | Your application URL        | `http://localhost:3000` (dev) / Your domain (prod) |
 
 ### Optional Configuration
 
@@ -254,6 +272,7 @@ referral_registrations (
 ### Row Level Security (RLS)
 
 All tables have RLS policies enabled to ensure:
+
 - Users can only modify their own data
 - Public read access for events and RSVPs
 - Protected write operations requiring authentication
@@ -289,6 +308,50 @@ npm run test:coverage
 ### Development Server
 
 The development server runs on **http://localhost:3000** with Turbopack for fast refresh.
+
+### Test Data Generation
+
+For development purposes, you can generate test events to populate your database with sample data.
+
+**How it works:**
+
+- **Endpoint**: `POST /api/events/generate-test-data`
+- **Availability**: Development mode only (`NODE_ENV=development`)
+- **Authentication**: Requires authenticated user
+- **What it generates**: 20 test events (10 past, 10 future)
+  - **Past events**: Random dates 1-30 days ago
+  - **Future events**: Random dates 1-60 days ahead
+  - Realistic titles (Summer Music Festival, Tech Conference, etc.)
+  - Varied locations across major US cities
+  - Random times between 9 AM - 8 PM
+
+**Using the test data generator:**
+
+```bash
+# Using curl (after signing in)
+curl -X POST http://localhost:3000/api/events/generate-test-data \
+  -H "Content-Type: application/json"
+
+# Or use your API client (Postman, Insomnia, etc.)
+POST http://localhost:3000/api/events/generate-test-data
+```
+
+**Response:**
+
+```json
+{
+  "message": "Successfully generated 20 test events",
+  "count": 20,
+  "events": [...]
+}
+```
+
+**Security:**
+
+- Only works in development environment
+- Returns 403 Forbidden in production
+- All events are owned by the authenticated user
+- Can be called multiple times to generate more test data
 
 ### Code Quality
 
@@ -332,8 +395,16 @@ npm run test:coverage
 ### Coverage Requirements
 
 - **Threshold**: 80% coverage required
+- **Current**: 94.91% coverage achieved ✅
 - **Scope**: API routes (`app/api/**/*.ts`) and utilities (`lib/utils.ts`)
 - **Components**: No component tests - only API routes are tested
+
+### Coverage Breakdown
+
+- **Statements**: 94.91%
+- **Branches**: 93.15%
+- **Functions**: 100%
+- **Lines**: 94.91%
 
 ### Writing Tests
 
@@ -422,35 +493,35 @@ Check route type
 ### Data Flow Pattern
 
 **Server Components:**
+
 ```typescript
 // app/events/page.tsx
 async function EventsPage() {
-  const supabase = await createClient()
-  const { data: events } = await supabase
-    .from('events')
-    .select('*')
+  const supabase = await createClient();
+  const { data: events } = await supabase.from("events").select("*");
 
-  return <EventsList events={events} />
+  return <EventsList events={events} />;
 }
 ```
 
 **Client Components:**
+
 ```typescript
 // components/rsvp-form.tsx
-'use client'
+"use client";
 
 function RSVPForm() {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = () => {
     startTransition(async () => {
-      await fetch('/api/rsvps', {
-        method: 'POST',
-        body: JSON.stringify({ status: 'going' })
-      })
-      router.refresh() // Revalidate server data
-    })
-  }
+      await fetch("/api/rsvps", {
+        method: "POST",
+        body: JSON.stringify({ status: "going" }),
+      });
+      router.refresh(); // Revalidate server data
+    });
+  };
 }
 ```
 
@@ -517,6 +588,7 @@ viral-events-app/
 3. Add environment variables in Vercel dashboard:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_APP_URL` (set to your Vercel domain)
 4. Deploy
 
 ### Environment Variables for Production
@@ -526,7 +598,10 @@ Ensure all environment variables are set in your deployment platform:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-production-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-production-anon-key
+NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
 ```
+
+**Important**: Set `NEXT_PUBLIC_APP_URL` to your production domain (e.g., `https://your-app.vercel.app`) for referral links to work correctly.
 
 ### Build Command
 
@@ -560,6 +635,7 @@ npm start
 - `DELETE /api/events/[id]` - Delete event (owner only)
 - `GET /api/events/my` - Get user's events (auth required)
 - `GET /api/events/latest` - Get latest 6 events (public)
+- `POST /api/events/generate-test-data` - Generate 20 test events (dev only, auth required)
 
 ### RSVPs API
 
