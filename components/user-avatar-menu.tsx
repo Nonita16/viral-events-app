@@ -2,21 +2,19 @@
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 interface UserAvatarMenuProps {
   email: string;
 }
 
 export function UserAvatarMenu({ email }: UserAvatarMenuProps) {
-  const router = useRouter();
   const firstLetter = email.charAt(0).toUpperCase();
 
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.refresh(); // Revalidate Server Components
-    router.push("/auth/login");
+    // Use full page reload to ensure Server Components fetch fresh auth state
+    window.location.href = "/auth/login";
   };
 
   return (

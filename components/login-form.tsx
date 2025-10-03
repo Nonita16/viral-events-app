@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function LoginForm({
@@ -14,7 +13,6 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +26,8 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      router.refresh(); // Revalidate Server Components
-      router.push("/");
+      // Use full page reload to ensure Server Components fetch fresh auth state
+      window.location.href = "/";
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
