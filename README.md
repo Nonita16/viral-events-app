@@ -2,6 +2,9 @@
 
 A modern event management platform with viral sharing capabilities, built to enable users to create, share, and track events with powerful referral analytics.
 
+<img width="1149" height="1291" alt="Screenshot 2025-10-02 at 8 47 32 PM" src="https://github.com/user-attachments/assets/4d39dd47-6b64-4d0b-a594-1696addb1cbc" />
+
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
