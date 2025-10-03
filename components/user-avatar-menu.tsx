@@ -15,6 +15,7 @@ export function UserAvatarMenu({ email }: UserAvatarMenuProps) {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    router.refresh(); // Revalidate Server Components
     router.push("/auth/login");
   };
 
